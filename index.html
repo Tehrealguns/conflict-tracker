@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conflict Tracker — Israel / Iran / US</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .feed-card { transition: transform 0.15s, box-shadow 0.15s; }
+    .feed-card:hover { transform: translateY(-2px); }
+    .pulse-dot { animation: pulse-ring 2s ease-out infinite; }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .tab-btn.active { color: #fff; background: #1d4ed8; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 9999px; }
+    .twitter-embed { min-height: 400px; }
+    #notif-drawer { transform: translateX(100%); transition: transform 0.25s ease; }
+    #notif-drawer.open { transform: translateX(0); }
+    #notif-overlay { opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    #notif-overlay.open { opacity: 1; pointer-events: auto; }
+    .notif-item { animation: slideIn 0.2s ease-out; }
+    @keyframes slideIn { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:translateX(0); } }
+    .notif-badge { animation: badgePop 0.3s ease; }
+    @keyframes badgePop { 0%{transform:scale(0)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-md border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-3 h-3 rounded-full bg-red-500 pulse-dot"></div>
+        <h1 class="text-2xl font-bold tracking-tight">Conflict Tracker</h1>
+        <span class="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-800 px-2 py-1 rounded-lg">Israel &middot; Iran &middot; US</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="clock" class="text-sm text-gray-400 font-medium tabular-nums"></span>
+        <button id="notif-bell" class="relative text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" title="Notifications">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span id="notif-count" class="hidden notif-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">0</span>
+        </button>
+        <button onclick="location.reload()" class="text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+          Refresh all
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation tabs -->
+  <nav class="max-w-7xl mx-auto px-6 pt-6">
+    <div class="flex gap-2 flex-wrap">
+      <button class="tab-btn active text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-colors" data-tab="all">All sources</button>
+      <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-colors" data-tab="twitter">Twitter / X</button>
+      <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-colors" data-tab="news">News outlets</button>
+      <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-colors" data-tab="live">Live feeds</button>
+      <button class="tab-btn text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition-colors" data-tab="maps">Maps &amp; flights</button>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+    <!-- ===================== TWITTER / X SECTION ===================== -->
+    <section data-section="twitter" class="space-y-6">
+      <div class="flex items-center gap-4">
+        <h2 class="text-lg font-medium">Twitter / X — OSINT &amp; Conflict Accounts</h2>
+        <div class="h-px flex-1 bg-gray-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- OSINT Defender -->
+        <a href="https://x.com/sentdefender" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">OD</div>
+            <div>
+              <p class="font-semibold">OSINT Defender</p>
+              <p class="text-xs text-gray-500">@sentdefender</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Real-time conflict updates, breaking military and geopolitical intelligence from open sources.</p>
+        </a>
+
+        <!-- Aurora Intel -->
+        <a href="https://x.com/AuroraIntel" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-sm">AI</div>
+            <div>
+              <p class="font-semibold">Aurora Intel</p>
+              <p class="text-xs text-gray-500">@AuroraIntel</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Global OSINT tracking military aircraft, naval movements, and conflict zones worldwide.</p>
+        </a>
+
+        <!-- Intel Crab -->
+        <a href="https://x.com/IntelCrab" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-bold text-sm">IC</div>
+            <div>
+              <p class="font-semibold">Intel Crab</p>
+              <p class="text-xs text-gray-500">@IntelCrab</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Breaking conflict news and OSINT analysis on Middle East and global security events.</p>
+        </a>
+
+        <!-- Faytuks News Desk -->
+        <a href="https://x.com/Faytuks" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-sm">FN</div>
+            <div>
+              <p class="font-semibold">Faytuks News Desk</p>
+              <p class="text-xs text-gray-500">@Faytuks</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Aggregated conflict coverage with emphasis on Middle Eastern geopolitics.</p>
+        </a>
+
+        <!-- War Monitor -->
+        <a href="https://x.com/WarMonitors" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-rose-700 flex items-center justify-center text-white font-bold text-sm">WM</div>
+            <div>
+              <p class="font-semibold">War Monitor</p>
+              <p class="text-xs text-gray-500">@WarMonitors</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">24/7 monitoring of global conflicts, missile strikes, and military operations.</p>
+        </a>
+
+        <!-- Clash Report -->
+        <a href="https://x.com/clabortweet" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-sky-600 flex items-center justify-center text-white font-bold text-sm">CR</div>
+            <div>
+              <p class="font-semibold">Clash Report</p>
+              <p class="text-xs text-gray-500">@clabortweet</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Real-time battle maps and frontline updates across active conflict theatres.</p>
+        </a>
+
+        <!-- BNO News -->
+        <a href="https://x.com/BNONews" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-bold text-sm">BN</div>
+            <div>
+              <p class="font-semibold">BNO News</p>
+              <p class="text-xs text-gray-500">@BNONews</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Fast-breaking verified news alerts on major events including military and conflict.</p>
+        </a>
+
+        <!-- Mossad Commentary -->
+        <a href="https://x.com/MOSSADil" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-emerald-700 flex items-center justify-center text-white font-bold text-sm">MC</div>
+            <div>
+              <p class="font-semibold">Mossad Commentary</p>
+              <p class="text-xs text-gray-500">@MOSSADil</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Israeli intelligence-focused commentary and breaking updates on regional threats.</p>
+        </a>
+
+        <!-- Hananya Naftali -->
+        <a href="https://x.com/HananyaNaftali" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-sm">HN</div>
+            <div>
+              <p class="font-semibold">Hananya Naftali</p>
+              <p class="text-xs text-gray-500">@HananyaNaftali</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Israeli perspective with rapid updates on IDF operations and security developments.</p>
+        </a>
+
+        <!-- Iran International English -->
+        <a href="https://x.com/IranIntl_En" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm">II</div>
+            <div>
+              <p class="font-semibold">Iran International English</p>
+              <p class="text-xs text-gray-500">@IranIntl_En</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Independent Persian-language news network covering Iran, IRGC, and regional conflict.</p>
+        </a>
+
+        <!-- Middle East Eye -->
+        <a href="https://x.com/MiddleEastEye" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm">ME</div>
+            <div>
+              <p class="font-semibold">Middle East Eye</p>
+              <p class="text-xs text-gray-500">@MiddleEastEye</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Independent journalism covering the Middle East and North Africa region in depth.</p>
+        </a>
+
+        <!-- The Spectator Index -->
+        <a href="https://x.com/spectaborindex" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">SI</div>
+            <div>
+              <p class="font-semibold">The Spectator Index</p>
+              <p class="text-xs text-gray-500">@spectaborindex</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Rapid geopolitical updates and data-driven analysis on global events and power dynamics.</p>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ===================== NEWS OUTLETS SECTION ===================== -->
+    <section data-section="news" class="space-y-6">
+      <div class="flex items-center gap-4">
+        <h2 class="text-lg font-medium">News outlets &amp; analysis</h2>
+        <div class="h-px flex-1 bg-gray-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <a href="https://www.timesofisrael.com/topic/iran/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Times of Israel — Iran coverage</p>
+          <p class="text-sm text-gray-400">Israeli daily with comprehensive reporting on Iran relations and military operations.</p>
+          <p class="text-xs text-gray-500 mt-4">timesofisrael.com</p>
+        </a>
+
+        <a href="https://www.aljazeera.com/tag/iran/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Al Jazeera — Iran</p>
+          <p class="text-sm text-gray-400">International perspective on the conflict from the Gulf-based news network.</p>
+          <p class="text-xs text-gray-500 mt-4">aljazeera.com</p>
+        </a>
+
+        <a href="https://www.reuters.com/world/middle-east/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Reuters — Middle East</p>
+          <p class="text-sm text-gray-400">Wire service breaking news, often first to report confirmed strikes and diplomacy.</p>
+          <p class="text-xs text-gray-500 mt-4">reuters.com</p>
+        </a>
+
+        <a href="https://apnews.com/hub/iran" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Associated Press — Iran</p>
+          <p class="text-sm text-gray-400">Factual, non-partisan wire reporting with correspondents on the ground.</p>
+          <p class="text-xs text-gray-500 mt-4">apnews.com</p>
+        </a>
+
+        <a href="https://www.bbc.com/news/topics/ce1qrvlexjet" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">BBC News — Iran</p>
+          <p class="text-sm text-gray-400">Global broadcasting with in-depth analysis and verified battlefield reports.</p>
+          <p class="text-xs text-gray-500 mt-4">bbc.com</p>
+        </a>
+
+        <a href="https://www.jpost.com/middle-east/iran-news" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Jerusalem Post — Iran</p>
+          <p class="text-sm text-gray-400">Israeli English-language daily with focus on defense, security, and Iran relations.</p>
+          <p class="text-xs text-gray-500 mt-4">jpost.com</p>
+        </a>
+
+        <a href="https://iranintl.com/en" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Iran International</p>
+          <p class="text-sm text-gray-400">Independent news network with sources inside Iran covering IRGC and regime activity.</p>
+          <p class="text-xs text-gray-500 mt-4">iranintl.com</p>
+        </a>
+
+        <a href="https://www.cnn.com/middleeast" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">CNN — Middle East</p>
+          <p class="text-sm text-gray-400">US cable news coverage of the conflict with on-ground correspondents.</p>
+          <p class="text-xs text-gray-500 mt-4">cnn.com</p>
+        </a>
+
+        <a href="https://www.i24news.tv/en" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">i24NEWS</p>
+          <p class="text-sm text-gray-400">Israeli international 24-hour news channel broadcasting in English, French, and Arabic.</p>
+          <p class="text-xs text-gray-500 mt-4">i24news.tv</p>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ===================== LIVE FEEDS SECTION ===================== -->
+    <section data-section="live" class="space-y-6">
+      <div class="flex items-center gap-4">
+        <h2 class="text-lg font-medium">Live feeds &amp; streams</h2>
+        <div class="h-px flex-1 bg-gray-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- LiveUA Map -->
+        <a href="https://liveuamap.com/en/2024/middle-east" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-red-700 flex items-center justify-center text-white font-bold text-sm">LU</div>
+            <div>
+              <p class="font-semibold">LiveUA Map — Middle East</p>
+              <p class="text-xs text-gray-500">liveuamap.com</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Interactive conflict map with geolocated events, strikes, troop movements, and verified reports pinned in real time.</p>
+        </a>
+
+        <!-- Telegram OSINT -->
+        <a href="https://t.me/s/inikioficial" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-sky-700 flex items-center justify-center text-white font-bold text-sm">TG</div>
+            <div>
+              <p class="font-semibold">Telegram OSINT Channels</p>
+              <p class="text-xs text-gray-500">Various channels</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Telegram channels often break updates before mainstream media. Access via web preview.</p>
+        </a>
+
+        <!-- Al Jazeera Live -->
+        <a href="https://www.aljazeera.com/live" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-700 flex items-center justify-center text-white font-bold text-sm">AJ</div>
+            <div>
+              <p class="font-semibold">Al Jazeera — Live stream</p>
+              <p class="text-xs text-gray-500">aljazeera.com/live</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">24/7 English-language live broadcast with rolling coverage during escalation events.</p>
+        </a>
+
+        <!-- i24 Live -->
+        <a href="https://www.i24news.tv/en/live" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-blue-800 flex items-center justify-center text-white font-bold text-sm">i24</div>
+            <div>
+              <p class="font-semibold">i24NEWS — Live stream</p>
+              <p class="text-xs text-gray-500">i24news.tv/en/live</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Israeli 24/7 broadcast from Tel Aviv covering military operations and breaking events.</p>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ===================== MAPS & FLIGHTS SECTION ===================== -->
+    <section data-section="maps" class="space-y-6">
+      <div class="flex items-center gap-4">
+        <h2 class="text-lg font-medium">Maps, flights &amp; tracking</h2>
+        <div class="h-px flex-1 bg-gray-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Flightradar24 -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div class="p-6 pb-4">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-10 h-10 rounded-xl bg-yellow-500 flex items-center justify-center text-gray-900 font-bold text-sm">FR</div>
+              <div>
+                <p class="font-semibold">Flightradar24 — Middle East</p>
+                <p class="text-xs text-gray-500">Live aircraft tracking over the region</p>
+              </div>
+              <a href="https://www.flightradar24.com/32.08,53.69/6" target="_blank" rel="noopener" class="ml-auto text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors">
+                Open full map
+              </a>
+            </div>
+          </div>
+          <div class="w-full h-96">
+            <iframe src="https://www.flightradar24.com/simple_index.php?lat=32.08&lon=53.69&z=5" class="w-full h-full border-0" loading="lazy" title="Flightradar24 Middle East"></iframe>
+          </div>
+        </div>
+
+        <!-- ADS-B Exchange -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div class="p-6 pb-4">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center text-white font-bold text-sm">AX</div>
+              <div>
+                <p class="font-semibold">ADS-B Exchange</p>
+                <p class="text-xs text-gray-500">Unfiltered flight tracking — shows military aircraft</p>
+              </div>
+              <a href="https://globe.adsbexchange.com/?lat=32.08&lon=53.69&zoom=5.5" target="_blank" rel="noopener" class="ml-auto text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors">
+                Open full map
+              </a>
+            </div>
+          </div>
+          <div class="w-full h-96">
+            <iframe src="https://globe.adsbexchange.com/?lat=32.08&lon=53.69&zoom=5.5&hideButtons&hideSidebar" class="w-full h-full border-0" loading="lazy" title="ADS-B Exchange Middle East"></iframe>
+          </div>
+        </div>
+
+        <!-- MarineTraffic -->
+        <a href="https://www.marinetraffic.com/en/ais/home/centerx/53/centery/26/zoom/6" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-cyan-700 flex items-center justify-center text-white font-bold text-sm">MT</div>
+            <div>
+              <p class="font-semibold">MarineTraffic — Persian Gulf</p>
+              <p class="text-xs text-gray-500">marinetraffic.com</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Live vessel tracking in the Strait of Hormuz and Persian Gulf — monitor naval deployments and shipping disruptions.</p>
+        </a>
+
+        <!-- NASA FIRMS (Fire data) -->
+        <a href="https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@53.7,32.4,6.0z" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-orange-700 flex items-center justify-center text-white font-bold text-sm">NF</div>
+            <div>
+              <p class="font-semibold">NASA FIRMS — Fire &amp; thermal data</p>
+              <p class="text-xs text-gray-500">firms.modaps.eosdis.nasa.gov</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400">Satellite-detected fire and thermal anomalies — used to confirm large explosions and airstrikes from space.</p>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ===================== ADDITIONAL OSINT TOOLS ===================== -->
+    <section data-section="all" class="space-y-6">
+      <div class="flex items-center gap-4">
+        <h2 class="text-lg font-medium">Additional OSINT tools</h2>
+        <div class="h-px flex-1 bg-gray-800"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <a href="https://earthquake.usgs.gov/earthquakes/map/?currentFeatures&extent=23.56,40.08&extent=40.98,66.09" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">USGS Earthquake Monitor</p>
+          <p class="text-sm text-gray-400">Seismic activity can indicate large explosions or underground nuclear tests in the region.</p>
+          <p class="text-xs text-gray-500 mt-4">earthquake.usgs.gov</p>
+        </a>
+
+        <a href="https://www.nuclearwar.info/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Nuclear Threat Tracker</p>
+          <p class="text-sm text-gray-400">Monitoring nuclear escalation risks with DEFCON-style readiness indicators.</p>
+          <p class="text-xs text-gray-500 mt-4">nuclearwar.info</p>
+        </a>
+
+        <a href="https://alerts.in/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Red Alert — Israel Sirens</p>
+          <p class="text-sm text-gray-400">Real-time rocket and missile alert map for Israel showing active siren locations.</p>
+          <p class="text-xs text-gray-500 mt-4">alerts.in</p>
+        </a>
+
+        <a href="https://www.bellingcat.com/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">Bellingcat</p>
+          <p class="text-sm text-gray-400">Investigative journalism using open-source intelligence and verification techniques.</p>
+          <p class="text-xs text-gray-500 mt-4">bellingcat.com</p>
+        </a>
+
+        <a href="https://acleddata.com/middle-east/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">ACLED — Conflict Data</p>
+          <p class="text-sm text-gray-400">Academic-grade data on political violence and protest events across the region.</p>
+          <p class="text-xs text-gray-500 mt-4">acleddata.com</p>
+        </a>
+
+        <a href="https://www.iiss.org/topics/middle-east-and-north-africa/" target="_blank" rel="noopener" class="feed-card block bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-blue-600">
+          <p class="font-semibold mb-2">IISS — Strategic Analysis</p>
+          <p class="text-sm text-gray-400">International Institute for Strategic Studies with expert analysis on military balance.</p>
+          <p class="text-xs text-gray-500 mt-4">iiss.org</p>
+        </a>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 mt-8">
+    <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+      <p class="text-xs text-gray-500">Aggregated from public, open-source intelligence. No classified material. Verify all information independently.</p>
+      <div class="flex items-center gap-4">
+        <a href="admin.html" class="text-xs font-medium text-gray-600 hover:text-blue-400 transition-colors">Admin panel</a>
+        <p class="text-xs text-gray-500">Last opened: <span id="lastOpen"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Notification overlay + drawer -->
+  <div id="notif-overlay" class="fixed inset-0 bg-black/50 z-[60]" onclick="toggleNotifs()"></div>
+  <aside id="notif-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-900 border-l border-gray-800 z-[70] flex flex-col">
+    <div class="flex items-center justify-between p-6 border-b border-gray-800">
+      <div>
+        <h2 class="text-lg font-medium">Notifications</h2>
+        <p class="text-xs text-gray-500 mt-1">New posts from tracked accounts</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="clearAllNotifs()" class="text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-400 px-4 py-2 rounded-lg transition-colors">Clear all</button>
+        <button onclick="toggleNotifs()" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-800 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 px-6 py-4 border-b border-gray-800 bg-gray-950/50">
+      <div id="poll-status" class="w-2 h-2 rounded-full bg-green-500"></div>
+      <span class="text-xs text-gray-500">Polling every 3 min</span>
+      <span class="text-xs text-gray-600 ml-auto" id="last-poll">Never checked</span>
+    </div>
+    <div id="notif-list" class="flex-1 overflow-y-auto">
+      <div id="notif-empty" class="flex flex-col items-center justify-center h-full text-gray-600">
+        <svg class="w-12 h-12 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <p class="text-sm">No new notifications yet</p>
+        <p class="text-xs mt-2 text-gray-700">Feeds are checked automatically</p>
+      </div>
+    </div>
+    <div class="p-4 border-t border-gray-800">
+      <button id="enable-desktop" onclick="requestDesktopNotifs()" class="w-full text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+        Enable desktop notifications
+      </button>
+    </div>
+  </aside>
+
+  <script>
+    // ── Notification system ──
+    const NOTIF_STORE = 'ct_notifications';
+    const SEEN_STORE = 'ct_seen_posts';
+    const POLL_INTERVAL = 180000;
+
+    const RSS_FEEDS = [
+      { name: 'OSINT Defender', handle: 'sentdefender', rss: 'https://rsshub.app/twitter/user/sentdefender', color: '#2563eb' },
+      { name: 'Aurora Intel', handle: 'AuroraIntel', rss: 'https://rsshub.app/twitter/user/AuroraIntel', color: '#9333ea' },
+      { name: 'Intel Crab', handle: 'IntelCrab', rss: 'https://rsshub.app/twitter/user/IntelCrab', color: '#dc2626' },
+      { name: 'War Monitor', handle: 'WarMonitors', rss: 'https://rsshub.app/twitter/user/WarMonitors', color: '#be123c' },
+      { name: 'BNO News', handle: 'BNONews', rss: 'https://rsshub.app/twitter/user/BNONews', color: '#ea580c' },
+      { name: 'Faytuks News', handle: 'Faytuks', rss: 'https://rsshub.app/twitter/user/Faytuks', color: '#d97706' },
+      { name: 'Clash Report', handle: 'clabortweet', rss: 'https://rsshub.app/twitter/user/clabortweet', color: '#0284c7' },
+      { name: 'Iran Intl English', handle: 'IranIntl_En', rss: 'https://rsshub.app/twitter/user/IranIntl_En', color: '#16a34a' },
+      { name: 'Middle East Eye', handle: 'MiddleEastEye', rss: 'https://rsshub.app/twitter/user/MiddleEastEye', color: '#0d9488' },
+      { name: 'Spectator Index', handle: 'spectaborindex', rss: 'https://rsshub.app/twitter/user/spectaborindex', color: '#4f46e5' },
+      { name: 'Reuters ME', handle: null, rss: 'https://www.reutersagency.com/feed/?best-regions=middle-east&post_type=best', color: '#f97316' },
+      { name: 'Al Jazeera', handle: null, rss: 'https://www.aljazeera.com/xml/rss/all.xml', color: '#b45309' },
+    ];
+
+    function getNotifs() {
+      try { return JSON.parse(localStorage.getItem(NOTIF_STORE)) || []; }
+      catch { return []; }
+    }
+    function saveNotifs(n) { localStorage.setItem(NOTIF_STORE, JSON.stringify(n)); }
+    function getSeenIds() {
+      try { return JSON.parse(localStorage.getItem(SEEN_STORE)) || {}; }
+      catch { return {}; }
+    }
+    function saveSeenIds(s) { localStorage.setItem(SEEN_STORE, JSON.stringify(s)); }
+
+    function toggleNotifs() {
+      const drawer = document.getElementById('notif-drawer');
+      const overlay = document.getElementById('notif-overlay');
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('open');
+      if (drawer.classList.contains('open')) {
+        markAllRead();
+      }
+    }
+
+    function markAllRead() {
+      const badge = document.getElementById('notif-count');
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      const notifs = getNotifs();
+      notifs.forEach(n => n.unread = false);
+      saveNotifs(notifs);
+    }
+
+    function clearAllNotifs() {
+      saveNotifs([]);
+      renderNotifs();
+      markAllRead();
+    }
+
+    function addNotification(item) {
+      const notifs = getNotifs();
+      notifs.unshift({
+        id: item.id || crypto.randomUUID(),
+        source: item.source,
+        handle: item.handle,
+        title: item.title,
+        link: item.link,
+        color: item.color,
+        time: new Date().toISOString(),
+        unread: true,
+      });
+      if (notifs.length > 200) notifs.length = 200;
+      saveNotifs(notifs);
+
+      const unread = notifs.filter(n => n.unread).length;
+      const badge = document.getElementById('notif-count');
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.classList.remove('hidden');
+
+      if (Notification.permission === 'granted') {
+        try {
+          new Notification(item.source + ' posted', {
+            body: item.title?.slice(0, 120),
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">%F0%9F%94%B4</text></svg>',
+            tag: item.id,
+          });
+        } catch {}
+      }
+
+      // save to analytics store for admin panel
+      try {
+        const analytics = JSON.parse(localStorage.getItem('ct_analytics')) || {};
+        if (!analytics.notifLog) analytics.notifLog = [];
+        analytics.notifLog.unshift({ source: item.source, title: item.title, time: new Date().toISOString() });
+        if (analytics.notifLog.length > 300) analytics.notifLog.length = 300;
+        localStorage.setItem('ct_analytics', JSON.stringify(analytics));
+      } catch {}
+
+      renderNotifs();
+    }
+
+    function renderNotifs() {
+      const notifs = getNotifs();
+      const list = document.getElementById('notif-list');
+      const empty = document.getElementById('notif-empty');
+
+      if (notifs.length === 0) {
+        empty.style.display = '';
+        list.querySelectorAll('.notif-item').forEach(el => el.remove());
+        return;
+      }
+      empty.style.display = 'none';
+
+      const existing = list.querySelectorAll('.notif-item');
+      existing.forEach(el => el.remove());
+
+      notifs.slice(0, 100).forEach(n => {
+        const ago = timeAgo(n.time);
+        const div = document.createElement('a');
+        div.href = n.link || '#';
+        div.target = '_blank';
+        div.rel = 'noopener';
+        div.className = 'notif-item block px-6 py-4 border-b border-gray-800/50 hover:bg-gray-800/50 transition-colors';
+        div.innerHTML = `
+          <div class="flex items-start gap-4">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:${n.color || '#374151'}">${(n.source || '?')[0]}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-medium">${esc(n.source)}</span>
+                ${n.handle ? `<span class="text-xs text-gray-600">@${esc(n.handle)}</span>` : ''}
+                ${n.unread ? '<span class="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>' : ''}
+              </div>
+              <p class="text-sm text-gray-400 line-clamp-2">${esc(n.title || 'New post')}</p>
+              <p class="text-xs text-gray-600 mt-1">${ago}</p>
+            </div>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function timeAgo(iso) {
+      const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (s < 60) return 'Just now';
+      if (s < 3600) return Math.floor(s / 60) + 'm ago';
+      if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+      return Math.floor(s / 86400) + 'd ago';
+    }
+
+    async function pollFeeds() {
+      const status = document.getElementById('poll-status');
+      const lastPoll = document.getElementById('last-poll');
+      status.className = 'w-2 h-2 rounded-full bg-yellow-500 animate-pulse';
+
+      const seen = getSeenIds();
+      let newCount = 0;
+      const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
+      for (const feed of RSS_FEEDS) {
+        try {
+          const resp = await fetch(CORS_PROXY + encodeURIComponent(feed.rss), { signal: AbortSignal.timeout(8000) });
+          if (!resp.ok) continue;
+          const text = await resp.text();
+          const parser = new DOMParser();
+          const xml = parser.parseFromString(text, 'text/xml');
+          const items = xml.querySelectorAll('item');
+
+          const feedKey = feed.handle || feed.name;
+          if (!seen[feedKey]) seen[feedKey] = [];
+
+          let checked = 0;
+          items.forEach(item => {
+            if (checked >= 5) return;
+            checked++;
+            const title = item.querySelector('title')?.textContent?.trim() || '';
+            const link = item.querySelector('link')?.textContent?.trim() || '';
+            const guid = item.querySelector('guid')?.textContent?.trim() || link || title;
+
+            if (guid && !seen[feedKey].includes(guid)) {
+              seen[feedKey].push(guid);
+              if (seen[feedKey].length > 50) seen[feedKey] = seen[feedKey].slice(-50);
+              addNotification({
+                id: guid,
+                source: feed.name,
+                handle: feed.handle,
+                title: title,
+                link: link || (feed.handle ? `https://x.com/${feed.handle}` : '#'),
+                color: feed.color,
+              });
+              newCount++;
+            }
+          });
+        } catch {}
+      }
+
+      saveSeenIds(seen);
+      status.className = 'w-2 h-2 rounded-full bg-green-500';
+      lastPoll.textContent = 'Checked ' + new Date().toLocaleTimeString();
+    }
+
+    function requestDesktopNotifs() {
+      if (!('Notification' in window)) return;
+      Notification.requestPermission().then(p => {
+        const btn = document.getElementById('enable-desktop');
+        if (p === 'granted') {
+          btn.textContent = 'Desktop notifications enabled';
+          btn.classList.replace('bg-blue-600', 'bg-green-700');
+          btn.classList.replace('hover:bg-blue-700', 'hover:bg-green-800');
+        } else {
+          btn.textContent = 'Permission denied — enable in browser settings';
+          btn.classList.replace('bg-blue-600', 'bg-gray-700');
+          btn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
+        }
+      });
+    }
+
+    document.getElementById('notif-bell').addEventListener('click', toggleNotifs);
+
+    // init
+    (function initNotifs() {
+      renderNotifs();
+      const unread = getNotifs().filter(n => n.unread).length;
+      if (unread > 0) {
+        const badge = document.getElementById('notif-count');
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.classList.remove('hidden');
+      }
+      if (Notification.permission === 'granted') {
+        const btn = document.getElementById('enable-desktop');
+        btn.textContent = 'Desktop notifications enabled';
+        btn.classList.replace('bg-blue-600', 'bg-green-700');
+        btn.classList.replace('hover:bg-blue-700', 'hover:bg-green-800');
+      }
+      setTimeout(pollFeeds, 3000);
+      setInterval(pollFeeds, POLL_INTERVAL);
+    })();
+  </script>
+
+  <script>
+    // ── Analytics tracking ──
+    (function() {
+      const STORE = 'ct_analytics';
+      const VID_KEY = 'ct_visitor_id';
+
+      function getStore() {
+        try { return JSON.parse(localStorage.getItem(STORE)) || defaultStore(); }
+        catch { return defaultStore(); }
+      }
+      function defaultStore() {
+        return { visitors: {}, sessions: [], clicks: {}, tabs: {}, dailyViews: {} };
+      }
+      function save(d) { localStorage.setItem(STORE, JSON.stringify(d)); }
+      function vid() {
+        let id = localStorage.getItem(VID_KEY);
+        if (!id) { id = crypto.randomUUID(); localStorage.setItem(VID_KEY, id); }
+        return id;
+      }
+      function today() { return new Date().toISOString().slice(0, 10); }
+      function hour() { return new Date().getHours(); }
+
+      const visitorId = vid();
+      const sessionStart = Date.now();
+      const data = getStore();
+
+      if (!data.visitors[visitorId]) {
+        data.visitors[visitorId] = {
+          firstSeen: new Date().toISOString(),
+          ua: navigator.userAgent,
+          lang: navigator.language,
+          screen: screen.width + 'x' + screen.height,
+          visits: 0,
+        };
+      }
+      data.visitors[visitorId].visits++;
+      data.visitors[visitorId].lastSeen = new Date().toISOString();
+
+      const dayKey = today();
+      if (!data.dailyViews[dayKey]) data.dailyViews[dayKey] = { total: 0, hours: {} };
+      data.dailyViews[dayKey].total++;
+      const h = String(hour());
+      data.dailyViews[dayKey].hours[h] = (data.dailyViews[dayKey].hours[h] || 0) + 1;
+
+      const session = {
+        id: crypto.randomUUID(),
+        visitor: visitorId,
+        start: new Date().toISOString(),
+        referrer: document.referrer || 'direct',
+        ua: navigator.userAgent,
+        duration: 0,
+      };
+      data.sessions.push(session);
+      if (data.sessions.length > 500) data.sessions = data.sessions.slice(-500);
+      save(data);
+
+      setInterval(() => {
+        const d = getStore();
+        const s = d.sessions.find(s => s.id === session.id);
+        if (s) { s.duration = Math.round((Date.now() - sessionStart) / 1000); save(d); }
+      }, 5000);
+
+      window.addEventListener('beforeunload', () => {
+        const d = getStore();
+        const s = d.sessions.find(s => s.id === session.id);
+        if (s) { s.duration = Math.round((Date.now() - sessionStart) / 1000); s.end = new Date().toISOString(); save(d); }
+      });
+
+      document.addEventListener('click', (e) => {
+        const card = e.target.closest('.feed-card, a[href]');
+        if (!card) return;
+        const href = card.getAttribute('href');
+        if (!href || href.startsWith('#')) return;
+        const label = card.querySelector('.font-semibold')?.textContent?.trim() || href;
+        const d = getStore();
+        if (!d.clicks[label]) d.clicks[label] = { count: 0, url: href, last: null };
+        d.clicks[label].count++;
+        d.clicks[label].last = new Date().toISOString();
+        save(d);
+      });
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          const d = getStore();
+          d.tabs[tab] = (d.tabs[tab] || 0) + 1;
+          save(d);
+        });
+      });
+    })();
+
+    // ── Live clock ──
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent =
+        now.toLocaleString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }) + ' local';
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    document.getElementById('lastOpen').textContent = new Date().toLocaleString();
+
+    // ── Tab filtering ──
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('main > section');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        const filter = tab.dataset.tab;
+
+        sections.forEach((sec) => {
+          if (filter === 'all') {
+            sec.style.display = '';
+          } else {
+            sec.style.display = sec.dataset.section === filter || sec.dataset.section === 'all' ? '' : 'none';
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>
