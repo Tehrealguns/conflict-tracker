@@ -395,15 +395,21 @@
               <div class="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center text-white font-bold text-sm">AX</div>
               <div>
                 <p class="font-semibold">ADS-B Exchange</p>
-                <p class="text-xs text-gray-500">Unfiltered flight tracking — shows military aircraft</p>
+                <p class="text-xs text-gray-500" id="adsb-subtitle">Showing all aircraft</p>
               </div>
-              <a href="https://globe.adsbexchange.com/?lat=32.08&lon=53.69&zoom=5.5" target="_blank" rel="noopener" class="ml-auto text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors">
-                Open full map
-              </a>
+              <div class="ml-auto flex items-center gap-2">
+                <button id="adsb-mil-toggle" onclick="toggleAdsbMilitary()" class="flex items-center gap-2 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/></svg>
+                  Military only
+                </button>
+                <a href="https://globe.adsbexchange.com/?lat=32.08&lon=53.69&zoom=5.5" target="_blank" rel="noopener" class="text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors">
+                  Open full map
+                </a>
+              </div>
             </div>
           </div>
           <div class="w-full h-96">
-            <iframe src="https://globe.adsbexchange.com/?lat=32.08&lon=53.69&zoom=5.5&hideButtons&hideSidebar" class="w-full h-full border-0" loading="lazy" title="ADS-B Exchange Middle East"></iframe>
+            <iframe id="adsb-iframe" src="https://globe.adsbexchange.com/?lat=32.08&lon=53.69&zoom=5.5&hideButtons&hideSidebar" class="w-full h-full border-0" loading="lazy" title="ADS-B Exchange Middle East"></iframe>
           </div>
         </div>
 
@@ -489,7 +495,7 @@
     <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
       <p class="text-xs text-gray-500">Aggregated from public, open-source intelligence. No classified material. Verify all information independently.</p>
       <div class="flex items-center gap-4">
-        <a href="admin.html" class="text-xs font-medium text-gray-600 hover:text-blue-400 transition-colors">Admin panel</a>
+        <a href="stats.html" class="text-xs font-medium text-gray-600 hover:text-blue-400 transition-colors">Site statistics</a>
         <p class="text-xs text-gray-500">Last opened: <span id="lastOpen"></span></p>
       </div>
     </div>
@@ -743,6 +749,29 @@
           btn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-600');
         }
       });
+    }
+
+    // ── ADS-B military filter ──
+    let adsbMilOnly = false;
+    const ADSB_BASE = 'https://globe.adsbexchange.com/?lat=32.08&lon=53.69&zoom=5.5&hideButtons&hideSidebar';
+    function toggleAdsbMilitary() {
+      adsbMilOnly = !adsbMilOnly;
+      const iframe = document.getElementById('adsb-iframe');
+      const btn = document.getElementById('adsb-mil-toggle');
+      const sub = document.getElementById('adsb-subtitle');
+      if (adsbMilOnly) {
+        iframe.src = ADSB_BASE + '&mil=1';
+        btn.classList.remove('bg-gray-800', 'hover:bg-gray-700', 'text-gray-300');
+        btn.classList.add('bg-green-700', 'hover:bg-green-800', 'text-white');
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/></svg> All aircraft';
+        sub.textContent = 'Filtered to military aircraft only';
+      } else {
+        iframe.src = ADSB_BASE;
+        btn.classList.remove('bg-green-700', 'hover:bg-green-800', 'text-white');
+        btn.classList.add('bg-gray-800', 'hover:bg-gray-700', 'text-gray-300');
+        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/></svg> Military only';
+        sub.textContent = 'Showing all aircraft';
+      }
     }
 
     document.getElementById('notif-bell').addEventListener('click', toggleNotifs);

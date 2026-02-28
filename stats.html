@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel — Conflict Tracker</title>
+  <title>Site Statistics — Conflict Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwindcss.config = {
@@ -31,22 +31,14 @@
         <a href="index.html" class="text-gray-500 hover:text-white transition-colors">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </a>
-        <h1 class="text-2xl font-bold tracking-tight">Admin panel</h1>
+        <h1 class="text-2xl font-bold tracking-tight">Site statistics</h1>
         <span class="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-800 px-2 py-1 rounded-lg">Conflict Tracker</span>
       </div>
-      <div class="flex items-center gap-4">
-        <span id="clock" class="text-sm text-gray-400 font-medium tabular-nums"></span>
-        <button onclick="exportData()" class="text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-          Export JSON
-        </button>
-        <button onclick="if(confirm('Erase all analytics data?')){localStorage.removeItem('ct_analytics');localStorage.removeItem('ct_notifications');localStorage.removeItem('ct_seen_posts');location.reload()}" class="text-xs font-medium bg-red-900/50 hover:bg-red-900 text-red-300 px-4 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-          Reset data
-        </button>
-      </div>
+      <span id="clock" class="text-sm text-gray-400 font-medium tabular-nums"></span>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8" id="app">
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
     <!-- Stat cards -->
     <section class="grid grid-cols-2 md:grid-cols-4 gap-6" id="stat-cards"></section>
@@ -72,50 +64,49 @@
     <section class="bg-gray-900 border border-gray-800 rounded-xl p-6">
       <h2 class="text-lg font-medium mb-6">Most clicked sources</h2>
       <div id="click-chart" class="space-y-4"></div>
-      <p id="no-clicks" class="text-sm text-gray-600 hidden">No click data yet. Visit the main page and click on some sources.</p>
+      <p id="no-clicks" class="text-sm text-gray-600 hidden">No click data recorded yet.</p>
     </section>
 
-    <!-- Two-column: Tab usage + visitors -->
+    <!-- Two-column: Tab usage + visitor breakdown -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
       <!-- Tab usage -->
       <section class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 class="text-lg font-medium mb-6">Tab usage</h2>
+        <h2 class="text-lg font-medium mb-6">Section popularity</h2>
         <div id="tab-chart" class="space-y-4"></div>
       </section>
 
       <!-- Visitor breakdown -->
       <section class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h2 class="text-lg font-medium mb-6">Visitor details</h2>
-        <div id="visitor-list" class="space-y-4 max-h-80 overflow-y-auto"></div>
+        <h2 class="text-lg font-medium mb-6">Visitor breakdown</h2>
+        <div class="space-y-6">
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">By device</p>
+            <div id="device-chart" class="space-y-2"></div>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">By browser</p>
+            <div id="browser-chart" class="space-y-2"></div>
+          </div>
+        </div>
       </section>
 
     </div>
 
-    <!-- Notification log -->
+    <!-- Recent sessions (anonymized) -->
     <section class="bg-gray-900 border border-gray-800 rounded-xl p-6">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-medium">Notification log</h2>
-        <span id="notif-total" class="text-xs text-gray-500"></span>
-      </div>
-      <div id="notif-log" class="space-y-2 max-h-96 overflow-y-auto"></div>
-      <p id="no-notifs" class="text-sm text-gray-600 hidden">No notifications captured yet. Leave the main page open to collect feed updates.</p>
-    </section>
-
-    <!-- Session log -->
-    <section class="bg-gray-900 border border-gray-800 rounded-xl p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-medium">Session log</h2>
+        <h2 class="text-lg font-medium">Recent sessions</h2>
         <span id="session-total" class="text-xs text-gray-500"></span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-xs text-gray-500 uppercase tracking-wide border-b border-gray-800">
-              <th class="text-left py-2 pr-4">Started</th>
+              <th class="text-left py-2 pr-4">When</th>
               <th class="text-left py-2 pr-4">Duration</th>
-              <th class="text-left py-2 pr-4">Referrer</th>
               <th class="text-left py-2 pr-4">Device</th>
+              <th class="text-left py-2 pr-4">Browser</th>
             </tr>
           </thead>
           <tbody id="session-table"></tbody>
@@ -127,7 +118,7 @@
 
   <footer class="border-t border-gray-800 mt-8">
     <div class="max-w-7xl mx-auto px-6 py-6">
-      <p class="text-xs text-gray-500">All data stored locally in this browser's localStorage. Nothing is sent to any server.</p>
+      <p class="text-xs text-gray-500">All data is stored locally in your browser. Nothing is sent to any external server.</p>
     </div>
   </footer>
 
@@ -136,23 +127,21 @@
       try { return JSON.parse(localStorage.getItem('ct_analytics')) || {}; }
       catch { return {}; }
     }
-    function getNotifs() {
-      try { return JSON.parse(localStorage.getItem('ct_notifications')) || []; }
-      catch { return []; }
-    }
 
-    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function fmtDuration(sec) {
       if (!sec || sec < 1) return '< 1s';
       if (sec < 60) return sec + 's';
       if (sec < 3600) return Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
       return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
     }
-    function fmtDate(iso) {
+    function timeAgo(iso) {
       if (!iso) return '—';
-      const d = new Date(iso);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
-             d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (s < 60) return 'Just now';
+      if (s < 3600) return Math.floor(s / 60) + ' min ago';
+      if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+      if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
     function parseUA(ua) {
       if (!ua) return 'Unknown';
@@ -161,37 +150,36 @@
       return 'Desktop';
     }
     function browserFromUA(ua) {
-      if (!ua) return '?';
+      if (!ua) return 'Other';
       if (/edg/i.test(ua)) return 'Edge';
       if (/chrome/i.test(ua)) return 'Chrome';
       if (/firefox/i.test(ua)) return 'Firefox';
       if (/safari/i.test(ua)) return 'Safari';
       return 'Other';
     }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
     function render() {
       const data = getData();
-      const notifs = getNotifs();
       const visitors = data.visitors || {};
       const sessions = data.sessions || [];
       const clicks = data.clicks || {};
       const tabs = data.tabs || {};
       const dailyViews = data.dailyViews || {};
-      const notifLog = data.notifLog || [];
 
       const totalViews = Object.values(dailyViews).reduce((a, d) => a + (d.total || 0), 0);
       const uniqueVisitors = Object.keys(visitors).length;
       const avgDuration = sessions.length
         ? Math.round(sessions.reduce((a, s) => a + (s.duration || 0), 0) / sessions.length)
         : 0;
-      const totalClicks = Object.values(clicks).reduce((a, c) => a + c.count, 0);
+      const totalSessions = sessions.length;
 
       // ── Stat cards ──
       const cards = [
         { label: 'Total page views', value: totalViews, accent: 'text-blue-400' },
         { label: 'Unique visitors', value: uniqueVisitors, accent: 'text-emerald-400' },
-        { label: 'Avg. session', value: fmtDuration(avgDuration), accent: 'text-amber-400' },
-        { label: 'Source clicks', value: totalClicks, accent: 'text-purple-400' },
+        { label: 'Avg. session time', value: fmtDuration(avgDuration), accent: 'text-amber-400' },
+        { label: 'Total sessions', value: totalSessions, accent: 'text-purple-400' },
       ];
       document.getElementById('stat-cards').innerHTML = cards.map(c => `
         <div class="stat-card bg-gray-900 border border-gray-800 rounded-xl p-6">
@@ -232,7 +220,7 @@
         const opacity = v > 0 ? 0.3 + (v / maxH) * 0.7 : 0.08;
         hourlyHTML += `
           <div class="flex flex-col items-center gap-1">
-            <div class="w-full h-24 bg-gray-800 rounded-lg flex items-end justify-center overflow-hidden relative" title="${v} views at ${h}:00">
+            <div class="w-full h-24 bg-gray-800 rounded-lg flex items-end justify-center overflow-hidden" title="${v} views at ${h}:00">
               <div class="w-full rounded-t-lg transition-all duration-500" style="height:${pct}%;background:rgba(59,130,246,${opacity})"></div>
             </div>
             <span class="text-xs text-gray-600">${h}</span>
@@ -261,7 +249,7 @@
         `).join('');
       }
 
-      // ── Tab chart ──
+      // ── Tab / section chart ──
       const tabArr = Object.entries(tabs).sort((a, b) => b[1] - a[1]);
       const maxTab = tabArr.length ? tabArr[0][1] : 1;
       const tabLabels = { all: 'All sources', twitter: 'Twitter / X', news: 'News outlets', live: 'Live feeds', maps: 'Maps & flights' };
@@ -274,65 +262,61 @@
             </div>
           </div>
         </div>
-      `).join('') || '<p class="text-sm text-gray-600">No tab switches recorded yet.</p>';
+      `).join('') || '<p class="text-sm text-gray-600">No data yet.</p>';
 
-      // ── Visitor list ──
-      const visArr = Object.entries(visitors).sort((a, b) => new Date(b[1].lastSeen) - new Date(a[1].lastSeen));
-      document.getElementById('visitor-list').innerHTML = visArr.map(([id, v]) => `
-        <div class="bg-gray-800/50 rounded-xl p-4">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-300">${parseUA(v.ua)} &middot; ${browserFromUA(v.ua)}</span>
-            <span class="text-xs text-gray-500">${v.visits} visit${v.visits !== 1 ? 's' : ''}</span>
-          </div>
-          <div class="flex items-center gap-6 text-xs text-gray-500">
-            <span>First: ${fmtDate(v.firstSeen)}</span>
-            <span>Last: ${fmtDate(v.lastSeen)}</span>
-            <span>${v.screen || '?'}</span>
-            <span>${v.lang || '?'}</span>
-          </div>
-        </div>
-      `).join('') || '<p class="text-sm text-gray-600">No visitor data yet.</p>';
+      // ── Device + browser breakdown ──
+      const visArr = Object.values(visitors);
+      const deviceCounts = {};
+      const browserCounts = {};
+      visArr.forEach(v => {
+        const dev = parseUA(v.ua);
+        const br = browserFromUA(v.ua);
+        deviceCounts[dev] = (deviceCounts[dev] || 0) + 1;
+        browserCounts[br] = (browserCounts[br] || 0) + 1;
+      });
 
-      // ── Notification log ──
-      if (notifLog.length === 0) {
-        document.getElementById('no-notifs').classList.remove('hidden');
-        document.getElementById('notif-log').innerHTML = '';
-      } else {
-        document.getElementById('no-notifs').classList.add('hidden');
-        document.getElementById('notif-total').textContent = notifLog.length + ' total';
-        document.getElementById('notif-log').innerHTML = notifLog.slice(0, 100).map(n => `
-          <div class="flex items-center gap-4 py-2 border-b border-gray-800/30">
-            <span class="text-xs text-gray-500 w-28 flex-shrink-0 tabular-nums">${fmtDate(n.time)}</span>
-            <span class="text-xs font-medium text-blue-400 w-32 flex-shrink-0">${esc(n.source)}</span>
-            <span class="text-sm text-gray-400 truncate">${esc(n.title || 'New post')}</span>
-          </div>
-        `).join('');
-      }
+      const devColors = { Desktop: 'bg-blue-600', Mobile: 'bg-emerald-600', Tablet: 'bg-amber-600', Unknown: 'bg-gray-600' };
+      const brColors = { Chrome: 'bg-blue-500', Edge: 'bg-cyan-600', Firefox: 'bg-orange-500', Safari: 'bg-indigo-500', Other: 'bg-gray-600' };
+      const maxDev = Math.max(...Object.values(deviceCounts), 1);
+      const maxBr = Math.max(...Object.values(browserCounts), 1);
 
-      // ── Session table ──
+      document.getElementById('device-chart').innerHTML = Object.entries(deviceCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([dev, count]) => `
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-300 w-20 flex-shrink-0">${dev}</span>
+            <div class="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden">
+              <div class="bar ${devColors[dev] || 'bg-gray-600'} h-full rounded-full flex items-center justify-end pr-2" style="width:${Math.max((count / maxDev) * 100, 12)}%">
+                <span class="text-xs font-medium text-white">${count}</span>
+              </div>
+            </div>
+          </div>
+        `).join('') || '<p class="text-sm text-gray-600">No visitors yet.</p>';
+
+      document.getElementById('browser-chart').innerHTML = Object.entries(browserCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([br, count]) => `
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-300 w-20 flex-shrink-0">${br}</span>
+            <div class="flex-1 bg-gray-800 rounded-full h-6 overflow-hidden">
+              <div class="bar ${brColors[br] || 'bg-gray-600'} h-full rounded-full flex items-center justify-end pr-2" style="width:${Math.max((count / maxBr) * 100, 12)}%">
+                <span class="text-xs font-medium text-white">${count}</span>
+              </div>
+            </div>
+          </div>
+        `).join('') || '<p class="text-sm text-gray-600">No visitors yet.</p>';
+
+      // ── Session table (anonymized) ──
       const sortedSessions = [...sessions].sort((a, b) => new Date(b.start) - new Date(a.start));
-      document.getElementById('session-total').textContent = sessions.length + ' sessions';
-      document.getElementById('session-table').innerHTML = sortedSessions.slice(0, 50).map(s => `
+      document.getElementById('session-total').textContent = sessions.length + ' total';
+      document.getElementById('session-table').innerHTML = sortedSessions.slice(0, 30).map(s => `
         <tr class="border-b border-gray-800/30 hover:bg-gray-800/30 transition-colors">
-          <td class="py-2 pr-4 text-sm text-gray-400 tabular-nums">${fmtDate(s.start)}</td>
+          <td class="py-2 pr-4 text-sm text-gray-400">${timeAgo(s.start)}</td>
           <td class="py-2 pr-4 text-sm font-medium">${fmtDuration(s.duration)}</td>
-          <td class="py-2 pr-4 text-sm text-gray-500 truncate max-w-[200px]">${esc(s.referrer || 'direct')}</td>
-          <td class="py-2 pr-4 text-sm text-gray-500">${parseUA(s.ua)} &middot; ${browserFromUA(s.ua)}</td>
+          <td class="py-2 pr-4 text-sm text-gray-500">${parseUA(s.ua)}</td>
+          <td class="py-2 pr-4 text-sm text-gray-500">${browserFromUA(s.ua)}</td>
         </tr>
       `).join('') || '<tr><td colspan="4" class="py-4 text-gray-600 text-sm">No sessions recorded yet.</td></tr>';
-    }
-
-    function exportData() {
-      const blob = new Blob([JSON.stringify({
-        analytics: getData(),
-        notifications: getNotifs(),
-        exportedAt: new Date().toISOString(),
-      }, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'conflict-tracker-analytics-' + new Date().toISOString().slice(0, 10) + '.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
     }
 
     function updateClock() {
